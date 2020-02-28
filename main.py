@@ -1,5 +1,6 @@
 import sys
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import QSize
 import datetime
 import subprocess
 
@@ -25,17 +26,51 @@ class Window(QWidget):
 
         # Minute spinner
         self.minutes_spinner = QSpinBox()
+        self.minutes_spinner.setFixedSize(QSize(230, 20))
         self.minutes_spinner.setSingleStep(15)
+        self.minutes_spinner.setMinimum(1)
+        self.minutes_spinner.setMaximum(1000)
 
         # Date time selection widgets
-        now = datetime.datetime.now()
-        self.year_widget = QLineEdit(str(now.year))
-        self.month_widget = QLineEdit(str(now.month))
-        self.day_widget = QLineEdit(str(now.day))
+        current_year = datetime.datetime.now().year
 
-        self.hour_widget = QLineEdit(str(now.hour))
-        self.minute_widget = QLineEdit(str(now.minute))
-        self.second_widget = QLineEdit("00")
+        # Year widget
+        self.year_widget = QSpinBox()
+        self.year_widget.setFixedSize(QSize(70, 20))
+        self.year_widget.setMinimum(current_year)
+        self.year_widget.setMaximum(current_year+9)
+
+        # Month widget
+        self.month_widget = QSpinBox()
+        self.month_widget.setFixedSize(QSize(70, 20))
+        self.month_widget.setMinimum(1)
+        self.month_widget.setMaximum(12)
+
+        # Day widget
+        self.day_widget = QSpinBox()
+        self.day_widget.setFixedSize(QSize(70, 20))
+        self.day_widget.setMinimum(1)
+        self.day_widget.setMaximum(31)
+
+        # Hour widget
+        self.hour_widget = QSpinBox()
+        self.hour_widget.setFixedSize(QSize(70, 20))
+        self.hour_widget.setMinimum(0)
+        self.hour_widget.setMaximum(23)
+
+        # Minute widget
+        self.minute_widget = QSpinBox()
+        self.minute_widget.setFixedSize(QSize(70, 20))
+        self.minute_widget.setMinimum(0)
+        self.minute_widget.setMaximum(59)
+
+        # Second widget
+        self.second_widget = QSpinBox()
+        self.second_widget.setFixedSize(QSize(70, 20))
+        self.second_widget.setMinimum(0)
+        self.second_widget.setMaximum(59)
+
+        self.reset_spinners_values()
 
         # --- Actions section --- #
         self.shutdown_action = QRadioButton("Shutdown")
@@ -46,6 +81,7 @@ class Window(QWidget):
 
         # --- Buttons section --- #
         self.reset_button = QPushButton("Reset values", self)
+        self.reset_button.clicked.connect(self.reset_spinners_values)
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self.start_button_clicked)
 
@@ -126,6 +162,7 @@ class Window(QWidget):
 
         # Cancel scheduling if delay contains an error code
         if delay < 0:
+            print("Scheduling canceled")
             return
 
         if self.shutdown_action.isChecked():
@@ -184,14 +221,19 @@ class Window(QWidget):
 
         # Read values from form
         try:
-            y, mon, d = int(self.year_widget.text()), int(self.month_widget.text()), int(self.day_widget.text())
-            h, m, s = int(self.hour_widget.text()), int(self.minute_widget.text()), int(self.second_widget.text())
+            y, mon, d = int(self.year_widget.value()), int(self.month_widget.value()), int(self.day_widget.value())
+            h, m, s = int(self.hour_widget.value()), int(self.minute_widget.value()), int(self.second_widget.value())
         except ValueError as err:
             print(err)
             return None
 
         # Convert values into datetime format and return it
         if None not in (y, mon, d, h, m, s):
+
+            if (datetime.date(2012, 3, 1) - datetime.date(2012, 2, 1)).days < d:
+                print("Day out of a range for month")
+                return None
+
             date_time_str = str(y) + " " + str(mon) + " " + str(d) + " " + str(h) + " " + str(m) + " " + str(s)
 
             dt = datetime.datetime
@@ -219,6 +261,17 @@ class Window(QWidget):
             return s.seconds + s.days * 86400
         else:
             return s.seconds
+
+    def reset_spinners_values(self):
+        """Set spinner values to default ones"""
+        now = datetime.datetime.now()
+        self.year_widget.setValue(now.year)
+        self.minutes_spinner.setValue(15)
+        self.month_widget.setValue(now.month)
+        self.day_widget.setValue(now.day)
+        self.hour_widget.setValue(now.hour)
+        self.minute_widget.setValue(now.minute)
+        self.second_widget.setValue(0)
 
     def update_status_bar(self, command):
         print(command)
