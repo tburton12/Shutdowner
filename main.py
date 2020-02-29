@@ -1,6 +1,7 @@
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QSize
+from PyQt5.QtGui import QIcon
 import datetime
 import subprocess
 
@@ -10,6 +11,13 @@ class Window(QWidget):
         super().__init__()
         self.setWindowTitle("Shutdowner")
         self.setGeometry(350, 150, 400, 200)
+
+        # Set Window icon
+        app_icon = QIcon()
+        app_icon.addFile('icon.ico', QSize(64, 64))
+        self.setWindowIcon(app_icon)
+
+        self.scheduled_actions = []
         self.widgets()
         self.layouts()
         self.show()
@@ -84,8 +92,8 @@ class Window(QWidget):
         self.reset_button.clicked.connect(self.reset_spinners_values)
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self.start_button_clicked)
-
         self.cancel_button = QPushButton("Cancel actions")
+        self.cancel_button.clicked.connect(self.cancel_scheduled_actions)
 
         # --- Others --- #
         self.frame = QFrame()
@@ -181,13 +189,20 @@ class Window(QWidget):
             self.perform_action(delay=delay, flags="/l")
             self.update_status_bar("Logout scheduled!")
 
-    @staticmethod
-    def perform_action(flags, delay=1):
+    def perform_action(self, flags, delay=1):
         """Perform action with shutdown command with given parameters (for shutdown, restart etc.)"""
         # Used delayed ping to perform delay
         command = "ping -n " + str(delay) + " 127.0.0.1 > NUL 2>&1 && shutdown " + flags
         print(command)
-        ps = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.scheduled_actions.append(
+            subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
+
+    def cancel_scheduled_actions(self):
+        """Cancel all scheduled shutdown actions by killing each process"""
+        for process in self.scheduled_actions:
+            process.kill()
+
+        self.update_status_bar("All scheduled actions canceled.")
 
     def get_action_delay(self):
         """Returns calculated action delay basing on option selected in form
@@ -273,8 +288,10 @@ class Window(QWidget):
         self.minute_widget.setValue(now.minute)
         self.second_widget.setValue(0)
 
-    def update_status_bar(self, command):
-        print(command)
+    def update_status_bar(self, message):
+        """Uploads message to status bar"""
+        print(message)
+        self.message_bar.setText(message)
 
 
 def main():
