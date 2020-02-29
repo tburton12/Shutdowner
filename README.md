@@ -6,5 +6,7 @@ You can pass  precise time and date or use timer.
 
 App was created for own purposes and it can be considered as small sample code.
 
-<img src="/screenshots/screenshot1.png" height="80%" width="80%" />
+<br/>
+
+<img src="/screenshots/screenshot1.png" height="40%" width="40%" />
 
